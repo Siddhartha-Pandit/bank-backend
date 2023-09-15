@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import User
+from .models import User,openaccount,depositetype,applyloan
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
@@ -18,3 +18,19 @@ class UserSerializer(serializers.ModelSerializer):
             instance.set_password(password)
         instance.save()
         return instance
+
+class AccountSerializer(serializers.ModelSerializer):
+    class Meta:
+        model=openaccount
+        fields='__all__'
+
+class DepositeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model=depositetype
+        fields='__all__'
+
+class LoanSerializer(serializers.ModelSerializer):
+    class Meta:
+        model=applyloan
+        fields='__all__'
+

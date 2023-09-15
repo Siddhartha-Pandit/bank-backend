@@ -53,6 +53,8 @@ class openaccount(models.Model):
     incomeSource=models.CharField(max_length=20,choices=INCOME_SOURCE,default='')
     grossAnnualIncome=models.CharField(max_length=20,default='')
     mothersname=models.CharField(max_length=255,default='')
+    def __str__(self):
+        return self.email
 
 
 class depositetype(models.Model):
@@ -139,6 +141,9 @@ class depositetype(models.Model):
     email=models.EmailField(max_length=255,default='')
     phone=models.CharField(max_length=20,default='')
 
+    def __str__(self):
+        return self.email
+
 class applyloan(models.Model):
     LOAN_TYPE=[
         ('PERSONAL LOAN','personal loan'),
@@ -159,6 +164,9 @@ class applyloan(models.Model):
     amount=models.CharField(max_length=20,default='')
     tenure=models.CharField(max_length=3,default='')
     loanType=models.CharField(max_length=20,default='',choices=LOAN_TYPE)
+
+    def __str__(self):
+        return self.aadhar
 
     
 

@@ -2,7 +2,7 @@ from django.shortcuts import render
 from django.http import HttpResponse
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from .serializers import UserSerializer
+from .serializers import UserSerializer,AccountSerializer,DepositeSerializer,LoanSerializer
 from rest_framework import status
 import jwt,datetime
 from .models import User
@@ -112,3 +112,31 @@ class LogoutView(APIView):
             "message":"You are log out"
         }
         return response
+    
+class openbankaccount(APIView):
+    def post(self,request):
+        serializer=AccountSerializer(data=request.data)
+        if serializer.is_valid(raise_exception=True):
+            serializer.save()
+            return Response(serializer.data)
+        else:
+            return Response(serializer.errors,status=status.HTTP_400_BAD_REQUEST)
+
+class deposite(APIView):
+    def post(self,request):
+        serializer=DepositeSerializer(data=request.data)
+        if serializer.is_valid(raise_exception=True):
+            serializer.save()
+            return Response(serializer.data)
+        else:
+            return Response(serializer.errors,status=status.HTTP_400_BAD_REQUEST)
+
+class ApplyLoan(APIView):
+    def post(self,request):
+        serializer=LoanSerializer(data=request.data)
+        if serializer.is_valid(raise_exception=True):
+            serializer.save()
+            return Response(serializer.data)
+        else:
+            return Response(serializer.errors,status=status.HTTP_400_BAD_REQUEST)
+
