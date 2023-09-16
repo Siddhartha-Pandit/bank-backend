@@ -3,7 +3,8 @@ from .models import User,openaccount,depositetype,applyloan
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ['id','name','email','password','image','document']
+        fields = ['id','name','email','password']
+        # fields = ['id','name','email','password','image']
         
         # hide password
         extra_kwards={

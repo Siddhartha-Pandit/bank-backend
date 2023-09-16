@@ -3,8 +3,9 @@ from rest_framework.views import APIView
 from .serializers import UserSerializer,AccountSerializer,DepositeSerializer,LoanSerializer
 from rest_framework import status
 import jwt,datetime
-from .models import User
+from .models import User,openaccount,depositetype,applyloan
 from rest_framework.exceptions import AuthenticationFailed
+from rest_framework.permissions import IsAuthenticated
 
 class RegisterView(APIView):
     def post(self,request):
@@ -45,62 +46,62 @@ class LoginView(APIView):
     response.data = {'token': token}
     return response
   
-class UserView(APIView):
-    def get(self, request):
+# class UserView(APIView):
+#     def get(self, request):
         
        
      
 
-        # Check if the Authorization header is present
-        if 'Authorization' in request.headers:
-            auth_header = request.headers['Authorization']
-            # Split the header to extract the token
-            token = auth_header.split(' ')[1]
+#         # Check if the Authorization header is present
+#         if 'Authorization' in request.headers:
+#             auth_header = request.headers['Authorization']
+#             # Split the header to extract the token
+#             token = auth_header.split(' ')[1]
       
 
         
 
-        if not token:
-            raise AuthenticationFailed('Unauthenticated')
-
-        try:
-            payload = jwt.decode(token, 'secret', algorithms=['HS256'])
-
-        except jwt.ExpiredSignatureError:
-            raise AuthenticationFailed('Unauthenticated')
-
-        user = User.objects.filter(id=payload['id']).first()
-
-        if not user:
-            raise AuthenticationFailed('User not found')
-
-        serializer = UserSerializer(user)
-        return Response(serializer.data, status=status.HTTP_200_OK)
-    
-
-# class UserView(APIView):
-#     # permission_classes = [AllowAny]
-
-#     def get(self, request):
-        
-#         token = request.COOKIES.get('jwt')
-       
-#         print(token)
 #         if not token:
-#             print("dint get token")
 #             raise AuthenticationFailed('Unauthenticated')
 
 #         try:
 #             payload = jwt.decode(token, 'secret', algorithms=['HS256'])
 
 #         except jwt.ExpiredSignatureError:
-           
 #             raise AuthenticationFailed('Unauthenticated')
 
 #         user = User.objects.filter(id=payload['id']).first()
-#         serializer = UserSerializer(user)
 
-#         return Response(serializer.data)
+#         if not user:
+#             raise AuthenticationFailed('User not found')
+
+#         serializer = UserSerializer(user)
+#         return Response(serializer.data, status=status.HTTP_200_OK)
+    
+
+class UserView(APIView):
+    # permission_classes = [AllowAny]
+
+    def get(self, request):
+        
+        token = request.COOKIES.get('jwt')
+       
+        print(token)
+        if not token:
+            print("dint get token")
+            raise AuthenticationFailed('Unauthenticated')
+
+        try:
+            payload = jwt.decode(token, 'secret', algorithms=['HS256'])
+
+        except jwt.ExpiredSignatureError:
+           
+            raise AuthenticationFailed('Unauthenticated')
+
+        user = User.objects.filter(id=payload['id']).first()
+        serializer = UserSerializer(user)
+
+        return Response(serializer.data)
 
 class LogoutView(APIView):
     def post(self,request):
@@ -138,3 +139,110 @@ class ApplyLoan(APIView):
         else:
             return Response(serializer.errors,status=status.HTTP_400_BAD_REQUEST)
 
+
+class newbankaccdetail(APIView):
+    def get(self, request):
+        token = request.COOKIES.get('jwt')
+        print(token)  # Print the token for debugging
+
+        if not token:
+            print("dint get token")
+            raise AuthenticationFailed('Unauthenticated')
+
+        try:
+            payload = jwt.decode(token, 'secret', algorithms=['HS256'])
+            print(f"Decoded Payload: {payload}")  # Print the decoded payload for debugging
+
+        except jwt.ExpiredSignatureError:
+            print("Token has expired")
+            raise AuthenticationFailed('Unauthenticated')
+
+        user = User.objects.filter(id=payload['id']).first()
+        if user is None:
+            print("User not found")
+            raise AuthenticationFailed('Unauthenticated')
+
+        # Query the openaccount model to retrieve user's account data
+        account_data = openaccount.objects.all()
+        # user = User.objects.filter(id=payload['id']).first()
+
+        if account_data is None:
+            print("Account data not found for the user")
+            raise AuthenticationFailed('Unauthenticated')
+
+        # Serialize the account data using the openaccountSerializer
+        serializer = AccountSerializer(account_data,many=True)
+
+        return Response(serializer.data)
+
+class newdeposite(APIView):
+   
+    def get(self, request):
+        token = request.COOKIES.get('jwt')
+        print(token)  # Print the token for debugging
+
+        if not token:
+            print("dint get token")
+            raise AuthenticationFailed('Unauthenticated')
+
+        try:
+            payload = jwt.decode(token, 'secret', algorithms=['HS256'])
+            print(f"Decoded Payload: {payload}")  # Print the decoded payload for debugging
+
+        except jwt.ExpiredSignatureError:
+            print("Token has expired")
+            raise AuthenticationFailed('Unauthenticated')
+
+        user = User.objects.filter(id=payload['id']).first()
+        if user is None:
+            print("User not found")
+            raise AuthenticationFailed('Unauthenticated')
+
+        # Query the openaccount model to retrieve user's account data
+        account_data =depositetype.objects.all()
+        # user = User.objects.filter(id=payload['id']).first()
+
+        if account_data is None:
+            print("Account data not found for the user")
+            raise AuthenticationFailed('Unauthenticated')
+
+        serializer=DepositeSerializer(account_data,many=True)
+
+        return Response(serializer.data)
+    
+
+class LendLoan(APIView):
+    def get(self, request):
+        token = request.COOKIES.get('jwt')
+        print(token)  # Print the token for debugging
+
+        if not token:
+            print("dint get token")
+            raise AuthenticationFailed('Unauthenticated')
+
+        try:
+            payload = jwt.decode(token, 'secret', algorithms=['HS256'])
+            print(f"Decoded Payload: {payload}")  # Print the decoded payload for debugging
+
+        except jwt.ExpiredSignatureError:
+            print("Token has expired")
+            raise AuthenticationFailed('Unauthenticated')
+
+        user = User.objects.filter(id=payload['id']).first()
+        if user is None:
+            print("User not found")
+            raise AuthenticationFailed('Unauthenticated')
+
+        # Query the openaccount model to retrieve user's account data
+        account_data =applyloan.objects.all()
+        # user = User.objects.filter(id=payload['id']).first()
+
+        if account_data is None:
+            print("Account data not found for the user")
+            raise AuthenticationFailed('Unauthenticated')
+
+        serializer=LoanSerializer(account_data,many=True)
+
+        return Response(serializer.data)
+    
+              

@@ -1,6 +1,6 @@
 
 from django.urls import path
-from .views import RegisterView,LoginView,UserView,LogoutView,openbankaccount,deposite,ApplyLoan
+from .views import RegisterView,LoginView,UserView,LogoutView,openbankaccount,deposite,ApplyLoan,newbankaccdetail,newdeposite,LendLoan
 
 urlpatterns = [
   path('register/',RegisterView.as_view(),name="register"),
@@ -10,4 +10,7 @@ urlpatterns = [
   path('openacc/',openbankaccount.as_view(),name="openacount"),
   path('deposit/',deposite.as_view(),name="Deposite"),
   path('loan/',ApplyLoan.as_view(),name="Apply Loan"),
+  path('bankaccount/',newbankaccdetail.as_view(),name="New bank acc details"),
+  path('depositer/',newdeposite.as_view(),name="New Depositer"),
+  path('loanapply/',LendLoan.as_view(),name="Apply for loan"),
 ]
