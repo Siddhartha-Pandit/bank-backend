@@ -52,7 +52,10 @@ class openaccount(models.Model):
     occupation=models.CharField(max_length=255,choices=OCCUPATION_LIST,default='')
     incomeSource=models.CharField(max_length=20,choices=INCOME_SOURCE,default='')
     grossAnnualIncome=models.CharField(max_length=20,default='')
-    mothersname=models.CharField(max_length=255,default='')
+    selected=models.BooleanField(default=False)
+    
+    def __str__(self):
+        return self.email
 
 
 class depositetype(models.Model):
@@ -138,6 +141,10 @@ class depositetype(models.Model):
     fullname=models.CharField(max_length=100,default='')
     email=models.EmailField(max_length=255,default='')
     phone=models.CharField(max_length=20,default='')
+    selected=models.BooleanField(default=False)
+
+    def __str__(self):
+        return self.email
 
 class applyloan(models.Model):
     LOAN_TYPE=[
@@ -159,8 +166,17 @@ class applyloan(models.Model):
     amount=models.CharField(max_length=20,default='')
     tenure=models.CharField(max_length=3,default='')
     loanType=models.CharField(max_length=20,default='',choices=LOAN_TYPE)
+    selected=models.BooleanField(default=False)
 
-    
+    def __str__(self):
+        return self.aadhar
+
+class heroImages(models.Model):
+    id = models.IntegerField(primary_key=True,unique=True)
+    image = models.ImageField(upload_to='media/images/', default='default_image.jpg')
+    def __str__(self):
+        return str(self.id)
+
 
 
 
