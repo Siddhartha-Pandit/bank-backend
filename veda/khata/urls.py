@@ -1,6 +1,7 @@
 
 from django.urls import path
-from .views import RegisterView,LoginView,UserView,LogoutView,openbankaccount,deposite,ApplyLoan,newbankaccdetail,newdeposite,LendLoan
+from .views import RegisterView,LoginView,UserView,LogoutView, heroimg,openbankaccount,deposite,ApplyLoan,newbankaccdetail,newdeposite,LendLoan,heroImages
+from . import views
 
 urlpatterns = [
   path('register/',RegisterView.as_view(),name="register"),
@@ -13,4 +14,7 @@ urlpatterns = [
   path('bankaccount/',newbankaccdetail.as_view(),name="New bank acc details"),
   path('depositer/',newdeposite.as_view(),name="New Depositer"),
   path('loanapply/',LendLoan.as_view(),name="Apply for loan"),
+  path('getimp/',heroimg.as_view(),name="Hero Images"),
+  path('upload/',views.uploadimg,name="Uplaod Images"),
+  path('delete/<int:pk>/',views.deleteimg,name="Delete img")
 ]

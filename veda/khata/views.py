@@ -1,12 +1,12 @@
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from .serializers import UserSerializer,AccountSerializer,DepositeSerializer,LoanSerializer
+from .serializers import UserSerializer,AccountSerializer,DepositeSerializer,LoanSerializer,HeroImageSerializer
 from rest_framework import status
 import jwt,datetime
-from .models import User,openaccount,depositetype,applyloan
+from .models import User,openaccount,depositetype,applyloan,heroImages
 from rest_framework.exceptions import AuthenticationFailed
 from rest_framework.permissions import IsAuthenticated
-
+from rest_framework.decorators import api_view
 class RegisterView(APIView):
     def post(self,request):
         serializer=UserSerializer(data=request.data)
@@ -244,5 +244,138 @@ class LendLoan(APIView):
         serializer=LoanSerializer(account_data,many=True)
 
         return Response(serializer.data)
+
+
+class heroimg(APIView):
+    def get(self, request):
+        token = request.COOKIES.get('jwt')
+        print(token)  # Print the token for debugging
+
+        if not token:
+            print("dint get token")
+            raise AuthenticationFailed('Unauthenticated')
+
+        try:
+            payload = jwt.decode(token, 'secret', algorithms=['HS256'])
+            print(f"Decoded Payload: {payload}")  # Print the decoded payload for debugging
+
+        except jwt.ExpiredSignatureError:
+            print("Token has expired")
+            raise AuthenticationFailed('Unauthenticated')
+
+        user = User.objects.filter(id=payload['id']).first()
+        if user is None:
+            print("User not found")
+            raise AuthenticationFailed('Unauthenticated')
+
+        # Query the openaccount model to retrieve user's account data
+        account_data =heroImages.objects.all()
+        # user = User.objects.filter(id=payload['id']).first()
+
+        if account_data is None:
+            print("Account data not found for the user")
+            raise AuthenticationFailed('Unauthenticated')
+
+        serializer=HeroImageSerializer(account_data,many=True)
+
+        return Response(serializer.data)
     
-              
+
+class uploadimg(APIView):
+    def post(self, request):
+        token = request.COOKIES.get('jwt')
+        print(token)  # Print the token for debugging
+
+        if not token:
+            print("dint get token")
+            raise AuthenticationFailed('Unauthenticated')
+
+        try:
+            payload = jwt.decode(token, 'secret', algorithms=['HS256'])
+            print(f"Decoded Payload: {payload}")  # Print the decoded payload for debugging
+
+        except jwt.ExpiredSignatureError:
+            print("Token has expired")
+            raise AuthenticationFailed('Unauthenticated')
+
+        user = User.objects.filter(id=payload['id']).first()
+        if user is None:
+            print("User not found")
+            raise AuthenticationFailed('Unauthenticated')
+
+        # Query the openaccount model to retrieve user's account data
+        account_data =heroImages.objects.all()
+        # user = User.objects.filter(id=payload['id']).first()
+
+        if account_data is None:
+            print("Account data not found for the user")
+            raise AuthenticationFailed('Unauthenticated')
+        serializer=HeroImageSerializer(instance=account_data,data=request.data)
+        if serializer.is_valid():
+            account_data.save()
+        return Response({'message': 'Image uploaded successfully'}, status=status.HTTP_201_CREATED)
+    
+@api_view(['POST'])
+def uploadimg(request):
+    token = request.COOKIES.get('jwt')
+    print(token)  # Print the token for debugging
+
+    if not token:
+        print("Didn't get a token")
+        raise AuthenticationFailed('Unauthenticated')
+
+    try:
+        payload = jwt.decode(token, 'secret', algorithms=['HS256'])
+        print(f"Decoded Payload: {payload}")  # Print the decoded payload for debugging
+
+    except jwt.ExpiredSignatureError:
+        print("Token has expired")
+        raise AuthenticationFailed('Unauthenticated')
+
+    user = User.objects.filter(id=payload['id']).first()
+    if user is None:
+        print("User not found")
+        raise AuthenticationFailed('Unauthenticated')
+
+    # Create a new instance of the heroImages model
+    new_image = heroImages()
+
+
+    # Set the image field with the request data
+    new_image.image = request.data.get('image')
+
+    # Save the new image record
+    new_image.save()
+
+    return Response({'message': 'Image uploaded successfully'}, status=status.HTTP_201_CREATED)
+
+@api_view(['DELETE'])
+def deleteimg(request,pk):
+    token = request.COOKIES.get('jwt')
+    print(token)  # Print the token for debugging
+
+    if not token:
+        print("dint get token")
+        raise AuthenticationFailed('Unauthenticated')
+
+    try:
+        payload = jwt.decode(token, 'secret', algorithms=['HS256'])
+        print(f"Decoded Payload: {payload}")  # Print the decoded payload for debugging
+
+    except jwt.ExpiredSignatureError:
+        print("Token has expired")
+        raise AuthenticationFailed('Unauthenticated')
+
+    user = User.objects.filter(id=payload['id']).first()
+    if user is None:
+        print("User not found")
+        raise AuthenticationFailed('Unauthenticated')
+
+        # Query the openaccount model to retrieve user's account data
+    account_data =heroImages.objects.get(id=pk)
+        # user = User.objects.filter(id=payload['id']).first()
+
+    account_data.delete()
+    return Response({'message': 'Image Deleted successfully'}, status=status.HTTP_201_CREATED)
+    
+                        

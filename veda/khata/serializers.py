@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import User,openaccount,depositetype,applyloan
+from .models import User,openaccount,depositetype,applyloan,heroImages
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
@@ -35,3 +35,8 @@ class LoanSerializer(serializers.ModelSerializer):
         model=applyloan
         fields='__all__'
 
+
+class HeroImageSerializer(serializers.ModelSerializer):
+    class Meta:
+        model=heroImages
+        fields='__all__'
