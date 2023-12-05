@@ -7,14 +7,17 @@ from .models import User,openaccount,depositetype,applyloan,heroImages
 from rest_framework.exceptions import AuthenticationFailed
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.decorators import api_view
+from rest_framework.parsers import MultiPartParser,FormParser
 class RegisterView(APIView):
+    parser_classes=(MultiPartParser,FormParser)
     def post(self,request):
         serializer=UserSerializer(data=request.data)
-        if serializer.is_valid(raise_exception=True):
+        if serializer.is_valid():
             serializer.save()
-            return Response(serializer.data)
+            return Response(serializer.data,status=status.HTTP_201_CREATED)
         else:
-            return Response(serializer.errors, status=status.HTTP_400_UNAUTHORIZED)
+            print(serializer.errors)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class LoginView(APIView):
   def post(self, request):
@@ -42,7 +45,7 @@ class LoginView(APIView):
         
         
     response.set_cookie(key='jwt', value=token, httponly=True)
-    # # localStorage.setItem('token', token)
+    # localStorage.setItem('token', token)
     response.data = {'token': token}
     return response
   
@@ -113,7 +116,7 @@ class LogoutView(APIView):
         return response
     
 class openbankaccount(APIView):
-    def post(self,request):
+    def put(self,request):
         serializer=AccountSerializer(data=request.data)
         if serializer.is_valid(raise_exception=True):
             serializer.save()
