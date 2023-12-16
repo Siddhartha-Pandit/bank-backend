@@ -1,4 +1,4 @@
-const url = 'http://127.0.0.1:8000/openacc/';
+const url = 'http://127.0.0.1:8000/deposit/';
 
 document.getElementById('myForm').addEventListener('submit', function(event) {
     event.preventDefault();

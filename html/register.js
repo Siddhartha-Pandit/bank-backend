@@ -7,6 +7,7 @@ document.getElementById('myForm').addEventListener('submit', function(event) {
 });
 
 async function submit() {
+    
     const formData = new FormData(document.getElementById('myForm'));
 console.log(formData)
     const response = await fetch(url, {
