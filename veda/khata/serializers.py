@@ -3,8 +3,8 @@ from .models import User,openaccount,depositetype,applyloan,heroImages
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        # fields = ['id','name','email','password']
-        fields = ['id','name','email','password','profile']
+        fields = ['id','name','email','password']
+        # fields = ['id','name','email','password','profile']
         # fields = '__all__'
         
         # hide password
