@@ -10,7 +10,7 @@ class User(AbstractUser):
      
     name=models.CharField(max_length=255)
     email=models.CharField(max_length=255,unique=True)
-    profile = models.ImageField(upload_to='media/images/',default='default_image.jpg')
+   
     user_type=models.CharField(max_length=20,choices=USER_TYPE, default='customer')
     
     username=None
