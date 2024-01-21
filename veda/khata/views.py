@@ -8,17 +8,36 @@ from rest_framework.exceptions import AuthenticationFailed
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.decorators import api_view
 from rest_framework.parsers import MultiPartParser,FormParser
-class RegisterView(APIView):
-    parser_classes=(MultiPartParser,FormParser)
-    def post(self,request):
-        serializer=UserSerializer(data=request.data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data,status=status.HTTP_201_CREATED)
-        else:
-            print(serializer.errors)
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+from django.contrib.auth.models import Group
+from django.contrib.auth.forms import UserCreationForm
+from rest_framework import generics
+from django.contrib.auth import get_user_model
 
+User = get_user_model()
+
+class RegisterView(generics.CreateAPIView):
+    queryset = User.objects.all()
+    serializer_class = UserSerializer
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        # Extract groups from the data and remove it from the validated data
+        groups_data = serializer.validated_data.pop('groups', [])
+
+        self.perform_create(serializer)
+
+        # Get the user instance created by perform_create
+        user = serializer.instance
+
+        # Handle many-to-many relationships
+        if groups_data:
+            user.groups.set(groups_data)
+
+        headers = self.get_success_headers(serializer.data)
+        return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+    
 class LoginView(APIView):
   def post(self, request):
     
@@ -40,10 +59,6 @@ class LoginView(APIView):
         raise AuthenticationFailed('Incorrect password')
 
     response = Response()
-    
-
-        
-        
     response.set_cookie(key='jwt', value=token, httponly=True)
     # localStorage.setItem('token', token)
     response.data = {'token': token}

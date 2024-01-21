@@ -10,6 +10,13 @@ class User(AbstractUser):
      
     name=models.CharField(max_length=255)
     email=models.CharField(max_length=255,unique=True)
+    phone=models.CharField(max_length=255, default='')
+    pan=models.CharField(max_length=20,default='')
+    aadhar=models.CharField(max_length=20,default='')
+    photo = models.ImageField(upload_to='user_photos/',  null=True ,)
+    aadharimg = models.FileField(upload_to='user_aadhar/', blank=True, null=True ,)
+    panimg = models.FileField(upload_to='user_pan_cards/', blank=True, null=True,)
+
    
     user_type=models.CharField(max_length=20,choices=USER_TYPE, default='customer')
     
