@@ -39,7 +39,8 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'khata.apps.KhataConfig',
     'rest_framework',
-    "corsheaders"
+    "corsheaders",
+    # 'django_extensions'
 ]
 
 MIDDLEWARE = [
