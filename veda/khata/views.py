@@ -3,7 +3,7 @@ from rest_framework.views import APIView
 from .serializers import UserSerializer,AccountSerializer,DepositeSerializer,LoanSerializer,HeroImageSerializer
 from rest_framework import status
 import jwt,datetime
-from .models import User,openaccount,depositetype,applyloan,heroImages
+from .models import User,openaccount,depositetype,applyloan,heroImages,OTP
 from rest_framework.exceptions import AuthenticationFailed
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.decorators import api_view
@@ -11,7 +11,13 @@ from rest_framework.parsers import MultiPartParser,FormParser
 from django.contrib.auth.models import Group
 from django.contrib.auth.forms import UserCreationForm
 from rest_framework import generics
-from django.contrib.auth import get_user_model
+from django.contrib.auth import authenticate, login, logout,get_user_model
+from rest_framework.permissions import IsAuthenticated,AllowAny
+from rest_framework_simplejwt.tokens import RefreshToken
+from django.contrib.auth import update_session_auth_hash
+from django.conf import settings
+from django.core.mail import send_mail
+
 
 User = get_user_model()
 
@@ -38,64 +44,30 @@ class RegisterView(generics.CreateAPIView):
         headers = self.get_success_headers(serializer.data)
         return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
     
+
+
 class LoginView(APIView):
-  def post(self, request):
-    
-    email = request.data['email']
-    password = request.data['password']
-    user = User.objects.filter(email=email).first()
-    if user is None:
-        raise AuthenticationFailed('User not Found')
+    permission_classes=[AllowAny]
+    def post(self,request):
+        email=request.data.get('email')
+        password=request.data.get('password')
+        print(f"email : {email} password {password}")
 
-    
-    payload = {
-        'id': user.id,
-        'exp': datetime.datetime.utcnow() + datetime.timedelta(minutes=60),
-        'iat': datetime.datetime.utcnow()
-    }
-    token = jwt.encode(payload, 'secret', algorithm='HS256')
+        if not email or not password:
+            return Response({"error":"Email or password are required"},status=status.HTTP_400_BAD_REQUEST)
 
-    if not user.check_password(password):
-        raise AuthenticationFailed('Incorrect password')
+        user=authenticate(request,email=email,password=password)
 
-    response = Response()
-    response.set_cookie(key='jwt', value=token, httponly=True)
-    # localStorage.setItem('token', token)
-    response.data = {'token': token}
-    return response
+        if user is not None:
+            login(request,user)
+            refresh=RefreshToken.for_user(user)
+            user_data = UserSerializer(user).data
+            return Response({'refresh':str(refresh),'access':str(refresh.access_token),'user':user_data},status=status.HTTP_200_OK)
+        else:
+            return Response({"error":"Login failed in valid email or password"},status=status.HTTP_401_UNAUTHORIZED)
+
   
-# class UserView(APIView):
-#     def get(self, request):
-        
-       
-     
 
-#         # Check if the Authorization header is present
-#         if 'Authorization' in request.headers:
-#             auth_header = request.headers['Authorization']
-#             # Split the header to extract the token
-#             token = auth_header.split(' ')[1]
-      
-
-        
-
-#         if not token:
-#             raise AuthenticationFailed('Unauthenticated')
-
-#         try:
-#             payload = jwt.decode(token, 'secret', algorithms=['HS256'])
-
-#         except jwt.ExpiredSignatureError:
-#             raise AuthenticationFailed('Unauthenticated')
-
-#         user = User.objects.filter(id=payload['id']).first()
-
-#         if not user:
-#             raise AuthenticationFailed('User not found')
-
-#         serializer = UserSerializer(user)
-#         return Response(serializer.data, status=status.HTTP_200_OK)
-    
 
 class UserView(APIView):
     # permission_classes = [AllowAny]
@@ -122,13 +94,11 @@ class UserView(APIView):
         return Response(serializer.data)
 
 class LogoutView(APIView):
+    permission_classes=[IsAuthenticated]
+    
     def post(self,request):
-        response=Response()
-        response.delete_cookie('jwt')
-        response.data={
-            "message":"You are log out"
-        }
-        return response
+        logout(request)
+        return Response({"Success":"Logged out successful"},status=status.HTTP_200_OK)
     
 class openbankaccount(APIView):
     def post(self,request):
@@ -396,4 +366,91 @@ def deleteimg(request,pk):
     account_data.delete()
     return Response({'message': 'Image Deleted successfully'}, status=status.HTTP_201_CREATED)
     
-                        
+       
+class ResetPasswordView(APIView):
+    permission_classes=[IsAuthenticated]
+    def post(self,request):
+        user=request.user
+        current_password=request.data.get('current_password')
+        new_password=request.data.get('new_password')
+
+        if not current_password or not new_password:
+            return Response({"error":"Current password or new password are required."},status=status.HTTP_400_BAD_REQUEST)
+
+        if not user.check_password(current_password):
+            return Response({"error":"Currenet password is incorrect"},status=status.HTTP_400_BAD_REQUEST)
+
+        user.set_password(new_password)
+        user.save()
+
+        update_session_auth_hash(request,user)
+
+        return Response({"message":"Password reset successfully"},status=status.HTTP_200_OK)
+
+class GeneratedOtpView(APIView):
+    def post(self,request):
+        email=request.data.get('email')
+        if not email:
+            return Response({"error":"Email is required"},status=status.HTTP_400_BAD_REQUEST)
+        
+        try:
+            user=User.objects.get(email=email)
+        except:
+            return Response({"error":"User with this email doesn't exists"},status=status.HTTP_404_NOT_FOUND)
+        otp_instance=OTP.generate_otp(email=email)
+        subject='Forgot Passowrd OTP'
+        message=f'Your OTP is: {otp_instance.otp}'
+        recipient_list=[email]
+        from_email=settings.EMAIL_HOST_USER
+
+        try:
+            send_mail(subject,message,from_email,recipient_list,fail_silently=False)
+            return Response({"message":"OTP sent to your email","isoptsent":True})
+        except:
+            return Response({"error":"Failed to send otp","isoptsent":False},status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+class VerifyOTPView(APIView):
+    def post(self,request):
+        email=request.data.get('email')
+        otp_entered=request.data.get('otp')
+
+        if not email or not otp_entered:
+            return Response({"error":"Invalid OTP or email"})
+        
+        try:
+            otp_obj=OTP.objects.get(user__email=email,otp=otp_entered,used=False)
+            if otp_obj.used:
+                return Response({"error":"OTP has been already been used"},status=status.HTTP_400_BAD_REQUEST)
+            elif otp_obj.is_expired():
+                return Response({"error":"Invalid OTP or OTP has expired"})
+        except OTP.DoesNotExist:
+            return Response({"error":"Invalid OTP","isoptverified":True},status=status.HTTP_400_BAD_REQUEST)
+        
+        return Response({"Message":"OTP verified successfully","isoptverified":True},status=status.HTTP_200_OK)
+
+class ForgotPasswordView(APIView):
+    def post(self,request):
+        email=request.data.get('email')
+        otp_entered=request.data.get('otp')
+        password=request.data.get('password')
+        if not email or not otp_entered or not password:
+            return Response({"error":"Invalid OTP or email "})
+        
+        try:
+            otp_obj=OTP.objects.get(user__email=email,otp=otp_entered,used=False)
+            if otp_obj.is_expired():
+                return Response({"error":"Invalid OTP or OTP has expired"})
+        except OTP.DoesNotExist:
+            return Response({"error":"Invalid OTP"},status=status.HTTP_400_BAD_REQUEST)
+        
+        try:
+            user=User.objects.get(email=email)
+            user.set_password(password)
+            user.save()
+            otp_obj.used=True
+            otp_obj.save()
+            return Response({"message":"Password reset successfully","ispasswordreset":True},status=status.HTTP_200_OK)
+        except User.DoesNotExist:
+            return Response({"error":"User not found","ispasswordreset":False},status=status.HTTP.HTTP_404_NOT_FOUND)
+            
+                         

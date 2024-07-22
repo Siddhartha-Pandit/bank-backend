@@ -1,14 +1,25 @@
 from rest_framework import serializers
 from .models import User,openaccount,depositetype,applyloan,heroImages
 from django.contrib.auth.models import Group
+from django.contrib.auth.hashers import make_password
 
+
+# class UserSerializer(serializers.ModelSerializer):
+#     groups = serializers.PrimaryKeyRelatedField(queryset=Group.objects.all(), many=True)
+
+#     class Meta:
+#         model = User
+#         fields = '__all__'
+#         # fields = ('id', 'name', 'email', 'phone', 'pan', 'aadhar', 'photo', 'aadharimg', 'panimg', 'user_type', 'groups')
 
 class UserSerializer(serializers.ModelSerializer):
-    groups = serializers.PrimaryKeyRelatedField(queryset=Group.objects.all(), many=True)
-
     class Meta:
         model = User
-        fields = ('id', 'name', 'email', 'phone', 'pan', 'aadhar', 'photo', 'aadharimg', 'panimg', 'user_type', 'groups')
+        fields = ['id', 'name', 'email', 'phone', 'pan', 'aadhar', 'photo', 'aadharimg', 'panimg', 'user_type', 'password']
+
+    def create(self, validated_data):
+        validated_data['password'] = make_password(validated_data['password'])
+        return super().create(validated_data)
 
 class AccountSerializer(serializers.ModelSerializer):
     class Meta:

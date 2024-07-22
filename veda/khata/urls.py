@@ -1,6 +1,6 @@
 
 from django.urls import path
-from .views import RegisterView,LoginView,UserView,LogoutView, heroimg,openbankaccount,deposite,ApplyLoan,newbankaccdetail,newdeposite,LendLoan,heroImages
+from .views import RegisterView,LoginView,UserView,LogoutView, heroimg,openbankaccount,deposite,ApplyLoan,newbankaccdetail,newdeposite,LendLoan,heroImages,ResetPasswordView,GeneratedOtpView,VerifyOTPView,ForgotPasswordView
 from . import views
 
 urlpatterns = [
@@ -16,5 +16,9 @@ urlpatterns = [
   path('loanapply/',LendLoan.as_view(),name="Apply for loan"),
   path('getimp/',heroimg.as_view(),name="Hero Images"),
   path('upload/',views.uploadimg,name="Uplaod Images"),
-  path('delete/<int:pk>/',views.deleteimg,name="Delete img")
+  path('delete/<int:pk>/',views.deleteimg,name="Delete img"),
+  path('auth/users/reset_password/',ResetPasswordView.as_view()),
+  path('generateotp/',GeneratedOtpView.as_view()),
+  path('verifyotp/',VerifyOTPView.as_view()),
+  path('forgotpassword/',ForgotPasswordView.as_view()),
 ]
