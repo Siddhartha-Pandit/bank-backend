@@ -204,3 +204,6 @@ class OTP(models.Model):
         otp_value=random.randint(100000,999999)
         otp_instance=cls.objects.create(user=user,otp=otp_value)
         return otp_instance
+    
+    def __str__(self):
+        return self.otp
