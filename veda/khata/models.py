@@ -4,6 +4,7 @@ from django.contrib.auth.models import AbstractUser
 import random
 from django.utils import timezone
 from .manager import usermanager
+from uuid import uuid4
 class User(AbstractUser):
     USER_TYPE=(
         ('admin','Admin'),
@@ -27,7 +28,11 @@ class User(AbstractUser):
     USERNAME_FIELD='email'
     REQUIRED_FIELDS=[]
     objects=usermanager()
-
+    is_verified = models.BooleanField(default=False)
+    verification_token = models.UUIDField(default=uuid4, editable=False, unique=True)
+    def __str__(self):
+        return self.email
+    
 class openaccount(models.Model):
     ACCOUNT_TYPE=[
         ('SAVING ACCOUNT','saving account'),
@@ -206,4 +211,4 @@ class OTP(models.Model):
         return otp_instance
     
     def __str__(self):
-        return self.otp
+        return str(self.otp)

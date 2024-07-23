@@ -1,6 +1,6 @@
 
 from django.urls import path
-from .views import RegisterView,LoginView,UserView,LogoutView, heroimg,openbankaccount,deposite,ApplyLoan,newbankaccdetail,newdeposite,LendLoan,heroImages,ResetPasswordView,GeneratedOtpView,VerifyOTPView,ForgotPasswordView
+from .views import RegisterView,LoginView,UserView,LogoutView, heroimg,openbankaccount,deposite,ApplyLoan,newbankaccdetail,newdeposite,LendLoan,heroImages,ResetPasswordView,GeneratedOtpView,VerifyOTPView,ForgotPasswordView,VerifyAccountView
 from . import views
 
 urlpatterns = [
@@ -21,4 +21,5 @@ urlpatterns = [
   path('generateotp/',GeneratedOtpView.as_view()),
   path('verifyotp/',VerifyOTPView.as_view()),
   path('forgotpassword/',ForgotPasswordView.as_view()),
+  path('verify/<uuid:token>/', VerifyAccountView.as_view(), name='verify_account'),
 ]

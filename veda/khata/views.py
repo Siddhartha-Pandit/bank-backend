@@ -1,7 +1,7 @@
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from .serializers import UserSerializer,AccountSerializer,DepositeSerializer,LoanSerializer,HeroImageSerializer
-from rest_framework import status
+from .serializers import UserSerializer,AccountSerializer,DepositeSerializer,LoanSerializer,HeroImageSerializer,VerificationSerializer
+from rest_framework import status,views
 import jwt,datetime
 from .models import User,openaccount,depositetype,applyloan,heroImages,OTP
 from rest_framework.exceptions import AuthenticationFailed
@@ -17,7 +17,9 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from django.contrib.auth import update_session_auth_hash
 from django.conf import settings
 from django.core.mail import send_mail
-
+from django.shortcuts import HttpResponse
+from django.utils.crypto import get_random_string
+from django.shortcuts import render
 
 User = get_user_model()
 
@@ -31,7 +33,7 @@ class RegisterView(generics.CreateAPIView):
 
         # Extract groups from the data and remove it from the validated data
         groups_data = serializer.validated_data.pop('groups', [])
-
+       
         self.perform_create(serializer)
 
         # Get the user instance created by perform_create
@@ -40,6 +42,16 @@ class RegisterView(generics.CreateAPIView):
         # Handle many-to-many relationships
         if groups_data:
             user.groups.set(groups_data)
+        
+        verification_link = request.build_absolute_uri(f'/verify/{user.verification_token}/')
+        send_mail(
+            'Verify your account',
+            f'Please verify your account by clicking the following link: {verification_link}',
+            settings.DEFAULT_FROM_EMAIL,
+            [user.email],
+            fail_silently=False,
+        )
+        
 
         headers = self.get_success_headers(serializer.data)
         return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
@@ -59,6 +71,9 @@ class LoginView(APIView):
         user=authenticate(request,email=email,password=password)
 
         if user is not None:
+            if not user.is_verified:
+                return Response({"error": "Account is not verified"}, status=status.HTTP_403_FORBIDDEN)
+
             login(request,user)
             refresh=RefreshToken.for_user(user)
             user_data = UserSerializer(user).data
@@ -101,6 +116,7 @@ class LogoutView(APIView):
         return Response({"Success":"Logged out successful"},status=status.HTTP_200_OK)
     
 class openbankaccount(APIView):
+    permission_classes=[IsAuthenticated]
     def post(self,request):
         serializer=AccountSerializer(data=request.data)
         if serializer.is_valid():
@@ -110,6 +126,7 @@ class openbankaccount(APIView):
             return Response(serializer.errors,status=status.HTTP_400_BAD_REQUEST)
 
 class deposite(APIView):
+    permission_classes=[IsAuthenticated]
     def post(self,request):
         serializer=DepositeSerializer(data=request.data)
         if serializer.is_valid(raise_exception=True):
@@ -119,6 +136,7 @@ class deposite(APIView):
             return Response(serializer.errors,status=status.HTTP_400_BAD_REQUEST)
 
 class ApplyLoan(APIView):
+    permission_classes=[IsAuthenticated]
     def post(self,request):
         serializer=LoanSerializer(data=request.data)
         if serializer.is_valid(raise_exception=True):
@@ -453,4 +471,14 @@ class ForgotPasswordView(APIView):
         except User.DoesNotExist:
             return Response({"error":"User not found","ispasswordreset":False},status=status.HTTP.HTTP_404_NOT_FOUND)
             
-                         
+class VerifyAccountView(views.APIView):
+    def get(self, request, token):
+        try:
+            user = User.objects.get(verification_token=token)
+            if user.is_verified:
+                return render(request, 'verify_success.html', {"message": "Account already verified"})
+            user.is_verified = True
+            user.save()
+            return render(request, 'verify_success.html', {"message": "Account successfully verified"})
+        except User.DoesNotExist:
+            return Response({"error": "Invalid token"}, status=status.HTTP_400_BAD_REQUEST)

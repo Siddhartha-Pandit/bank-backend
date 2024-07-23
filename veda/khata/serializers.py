@@ -41,3 +41,15 @@ class HeroImageSerializer(serializers.ModelSerializer):
     class Meta:
         model=heroImages
         fields='__all__'
+
+class VerificationSerializer(serializers.Serializer):
+    token = serializers.UUIDField()
+
+    def validate_token(self, value):
+        try:
+            user = User.objects.get(verification_token=value)
+        except User.DoesNotExist:
+            raise serializers.ValidationError("Invalid token")
+        if user.is_verified:
+            raise serializers.ValidationError("Account already verified")
+        return value
